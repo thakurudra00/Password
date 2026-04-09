@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>EMI Calculator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+<div class="bg-white shadow-xl rounded-2xl p-8 w-full max-w-4xl">
+  <h1 class="text-3xl font-bold mb-6 text-center">EMI Calculator</h1>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+    <!-- Inputs -->
+    <div>
+      <label>Loan Amount (₹)</label>
+      <input id="pInput" type="number" class="w-full p-2 border mb-2">
+      <input id="pSlider" type="range" min="10000" max="5000000" step="10000" class="w-full mb-4">
+
+      <label>Interest Rate (%)</label>
+      <input id="rInput" type="number" step="0.1" class="w-full p-2 border mb-2">
+      <input id="rSlider" type="range" min="1" max="20" step="0.1" class="w-full mb-4">
+
+      <label>Tenure (Years)</label>
+      <input id="yInput" type="number" class="w-full p-2 border mb-2">
+      <input id="ySlider" type="range" min="1" max="30" class="w-full mb-4">
+    </div>
+
+    <!-- Results -->
+    <div class="bg-gray-50 p-6 rounded-xl">
+      <p class="text-lg">Monthly EMI:</p>
+      <p id="emi" class="text-2xl font-bold text-green-600 mb-4">₹ 0</p>
+
+      <p>Total Interest:</p>
+      <p id="interest" class="mb-4">₹ 0</p>
+
+      <p>Total Payment:</p>
+      <p id="total">₹ 0</p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const pInput = document.getElementById("pInput");
+const pSlider = document.getElementById("pSlider");
+
+const rInput = document.getElementById("rInput");
+const rSlider = document.getElementById("rSlider");
+
+const yInput = document.getElementById("yInput");
+const ySlider = document.getElementById("ySlider");
+
+// Default values
+pInput.value = pSlider.value = 1000000;
+rInput.value = rSlider.value = 6.5;
+yInput.value = ySlider.value = 5;
+
+// Sync function
+function sync(input, slider) {
+  input.addEventListener("input", () => {
+    slider.value = input.value;
+    calculate();
+  });
+
+  slider.addEventListener("input", () => {
+    input.value = slider.value;
+    calculate();
+  });
+}
+
+sync(pInput, pSlider);
+sync(rInput, rSlider);
+sync(yInput, ySlider);
+
+// MAIN FIX: Stable async function
+async function calculate() {
+  let p = parseFloat(pInput.value);
+  let r = parseFloat(rInput.value);
+  let y = parseFloat(yInput.value);
+
+  if (!p || !r || !y) return;
+
+  try {
+    const res = await fetch('/calculate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        principal: p,
+        rate: r,
+        years: y
+      })
+    });
+
+    const data = await res.json();
+
+    document.getElementById("emi").innerText = "₹ " + data.emi.toLocaleString();
+    document.getElementById("interest").innerText = "₹ " + data.interest.toLocaleString();
+    document.getElementById("total").innerText = "₹ " + data.total.toLocaleString();
+
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+// Initial call
+calculate();
+</script>
+
+</body>
+</html>
